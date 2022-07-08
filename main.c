@@ -15,6 +15,7 @@ void idle();
 void test();
 void abort();
 void end();
+void transition_look_up(struct state_machine_t *state_machine, enum event_t event);
 
 /* define all possible states */
 enum state_t {
@@ -61,18 +62,22 @@ static struct state_function_row_t state_function_matrix[] = {
     {"STATE END", end}
 };
 
-struct machine_state_t {
+struct state_machine_t {
     enum state_t current_state;
 };
 
 int main() {
     init_system();
 
-    enum state_t 
-    
-
+    /* this init step gets state machine going */
+    struct state_machine_t state_machine; 
+    state_machine.current_state = _IDLE;
+    /* event = function() 
+        pass this event to transition_look_up()
+    */
     for (;;) {
-        
+        transition_look_up(state_machine, event);
+
     }
 }
 
@@ -97,6 +102,31 @@ void idle() {
     uart0_puts("system ready");
 
     sleep_mode();
+}
+
+void test() {
+    // TODO
+}
+
+void abort() {
+    // TODO
+}
+
+void end() {
+    // TODO
+}
+
+void transition_look_up(struct state_machine_t *state_machine, enum event_t event) {
+    for (uint8_t i=0;i<sizeof(state_transition_matrix)/sizeof(state_transition_matrix[0]);i++) {
+        if (state_transition_matrix[i].current_state == state_machine->current_state) {
+            if (state_transition_matrix[i].event == event) {
+                /* transition to next state */
+                state_machine->current_state = state_transition_matrix[i].next_state;
+                /* run function */
+                (state_function_matrix[state_machine->current_state].func)();
+            }
+        }
+    }
 }
 
 ISR(TIMER0_OVF_vect) {
