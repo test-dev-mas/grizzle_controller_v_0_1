@@ -15,7 +15,7 @@ void idle();
 void test();
 void abort();
 void end();
-void transition_look_up(struct state_machine_t *state_machine, enum event_t event);
+// void transition_look_up(struct state_machine_t *state_machine, enum event_t event);
 
 /* define all possible states */
 enum state_t {
@@ -65,6 +65,19 @@ static struct state_function_row_t state_function_matrix[] = {
 struct state_machine_t {
     enum state_t current_state;
 };
+
+void transition_look_up(struct state_machine_t* state_machine, enum event_t event) {
+    for (uint8_t i=0;i<sizeof(state_transition_matrix)/sizeof(state_transition_matrix[0]);i++) {
+        if (state_transition_matrix[i].current_state == state_machine->current_state) {
+            if (state_transition_matrix[i].event == event) {
+                /* transition to next state */
+                state_machine->current_state = state_transition_matrix[i].next_state;
+                /* run function */
+                (state_function_matrix[state_machine->current_state].func)();
+            }
+        }
+    }
+}
 
 int main() {
     init_system();
@@ -116,18 +129,18 @@ void end() {
     // TODO
 }
 
-void transition_look_up(struct state_machine_t *state_machine, enum event_t event) {
-    for (uint8_t i=0;i<sizeof(state_transition_matrix)/sizeof(state_transition_matrix[0]);i++) {
-        if (state_transition_matrix[i].current_state == state_machine->current_state) {
-            if (state_transition_matrix[i].event == event) {
-                /* transition to next state */
-                state_machine->current_state = state_transition_matrix[i].next_state;
-                /* run function */
-                (state_function_matrix[state_machine->current_state].func)();
-            }
-        }
-    }
-}
+// void transition_look_up(struct state_machine_t *state_machine, enum event_t event) {
+//     for (uint8_t i=0;i<sizeof(state_transition_matrix)/sizeof(state_transition_matrix[0]);i++) {
+//         if (state_transition_matrix[i].current_state == state_machine->current_state) {
+//             if (state_transition_matrix[i].event == event) {
+//                 /* transition to next state */
+//                 state_machine->current_state = state_transition_matrix[i].next_state;
+//                 /* run function */
+//                 (state_function_matrix[state_machine->current_state].func)();
+//             }
+//         }
+//     }
+// }
 
 ISR(TIMER0_OVF_vect) {
     PORTB ^= (1 << PB7);
