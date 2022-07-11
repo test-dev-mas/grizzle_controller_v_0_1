@@ -4,7 +4,7 @@ CC_UPLOAD = /home/dev/.arduino15/packages/arduino/tools/avrdude/6.3.0-arduino17/
 CONF = /home/dev/.arduino15/packages/arduino/tools/avrdude/6.3.0-arduino17/etc/avrdude.conf
 CFLAGS = -Os -DF_CPU=16000000UL -mmcu=atmega2560
 
-USBPORT = /dev/ttyUSB0
+USBPORT = /dev/ttyUSB1
 
 all: main.out
 

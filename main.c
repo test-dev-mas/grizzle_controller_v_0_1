@@ -13,12 +13,13 @@
 void init_system();
 void idle();
 void test();
-void abort();
+void _abort();              // "abort" name collides with a system function name, probably
 void end();
 // void transition_look_up(struct state_machine_t *state_machine, enum event_t event);
 
 /* define all possible states */
 enum state_t {
+    _ENTRY,
     _IDLE,
     _TEST,
     _ABORT,
@@ -42,6 +43,7 @@ struct state_transit_row_t {
 
 /* define a matrix of state transistion */
 static struct state_transit_row_t state_transition_matrix[] = {
+    {_ENTRY, test_none, _IDLE},
     {_IDLE, test_start, _TEST},
     {_TEST, test_abort, _ABORT},
     {_TEST, test_complete, _END},
@@ -58,7 +60,8 @@ struct state_function_row_t {
 static struct state_function_row_t state_function_matrix[] = {
     {"STATE IDLE", idle},
     {"STATE TEST", test},
-    {"STATE ABORT", abort},
+    {"STATE ABORT", _abort},
+    {"STATE END", end},
     {"STATE END", end}
 };
 
@@ -70,10 +73,8 @@ void transition_look_up(struct state_machine_t* state_machine, enum event_t even
     for (uint8_t i=0;i<sizeof(state_transition_matrix)/sizeof(state_transition_matrix[0]);i++) {
         if (state_transition_matrix[i].current_state == state_machine->current_state) {
             if (state_transition_matrix[i].event == event) {
-                /* transition to next state */
-                state_machine->current_state = state_transition_matrix[i].next_state;
-                /* run function */
                 (state_function_matrix[state_machine->current_state].func)();
+                state_machine->current_state = state_transition_matrix[i].next_state;
             }
         }
     }
@@ -84,13 +85,12 @@ int main() {
 
     /* this init step gets state machine going */
     struct state_machine_t state_machine; 
-    state_machine.current_state = _IDLE;
+    state_machine.current_state = _ENTRY;
     /* event = function() 
         pass this event to transition_look_up()
     */
     for (;;) {
-        transition_look_up(state_machine, event);
-
+        transition_look_up(&state_machine, test_none);
     }
 }
 
@@ -104,7 +104,7 @@ void init_system() {
     PORTG |= (1 << PG5);
 
     uart0_init();
-    init_timer0();
+    // init_timer0();
 
     set_sleep_mode(0);
 
@@ -112,21 +112,27 @@ void init_system() {
 }
 
 void idle() {
-    uart0_puts("system ready");
-
+    uart0_puts("state: idle\r\n");
+    // PORTB ^= (1 << PB7);
     sleep_mode();
 }
 
 void test() {
     // TODO
+    uart0_puts("state: test\r\n");
+    // PORTB ^= (1 << PB7);
 }
 
-void abort() {
+void _abort() {
     // TODO
+    uart0_puts("state: abort\r\n");
+    // PORTB ^= (1 << PB7);
 }
 
 void end() {
     // TODO
+    uart0_puts("state: end\r\n");
+    // PORTB ^= (1 << PB7);
 }
 
 // void transition_look_up(struct state_machine_t *state_machine, enum event_t event) {
