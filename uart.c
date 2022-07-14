@@ -11,6 +11,7 @@ void uart0_init() {
 
     UCSR0A |= (1<<U2X0);                        // U2X0 bit seems to be 1 by default on Pro Mini 3.3V 8Mhz
     UCSR0B |= (1 << RXEN0) | (1 << TXEN0);      // enable transmitter & receiver
+    UCSR0B |= (1 << TXCIE0);                    // enable TX Complete Interrupt
 }
 
 void uart0_transmit(uint8_t data) {

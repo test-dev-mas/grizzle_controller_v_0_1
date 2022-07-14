@@ -13,13 +13,11 @@
 void init_system();
 void idle();
 void test();
-void _abort();              // "abort" name collides with a system function name, probably
+void _abort();
 void end();
-// void transition_look_up(struct state_machine_t *state_machine, enum event_t event);
 
 /* define all possible states */
 enum state_t {
-    _ENTRY,
     _IDLE,
     _TEST,
     _ABORT,
@@ -28,10 +26,10 @@ enum state_t {
 
 /* define all events */
 enum event_t {
-    test_start,
+    test_start = 0x30,
     test_abort,
     test_complete,
-    test_none
+    test_none                                                       // enables an "automatic" transition
 };
 
 /* define a row in state transition matrix */
@@ -43,7 +41,7 @@ struct state_transit_row_t {
 
 /* define a matrix of state transistion */
 static struct state_transit_row_t state_transition_matrix[] = {
-    {_ENTRY, test_none, _IDLE},
+    {_IDLE, test_none, _IDLE},                                      // a infinite loop where program awaits serial instruction
     {_IDLE, test_start, _TEST},
     {_TEST, test_abort, _ABORT},
     {_TEST, test_complete, _END},
@@ -73,6 +71,9 @@ void transition_look_up(struct state_machine_t* state_machine, enum event_t even
     for (uint8_t i=0;i<sizeof(state_transition_matrix)/sizeof(state_transition_matrix[0]);i++) {
         if (state_transition_matrix[i].current_state == state_machine->current_state) {
             if (state_transition_matrix[i].event == event) {
+                uart0_puts(state_function_matrix[state_machine->current_state].name);
+                uart0_puts("\r\n");
+
                 (state_function_matrix[state_machine->current_state].func)();
                 state_machine->current_state = state_transition_matrix[i].next_state;
             }
@@ -83,14 +84,14 @@ void transition_look_up(struct state_machine_t* state_machine, enum event_t even
 int main() {
     init_system();
 
-    /* this init step gets state machine going */
+    /* initialize state machine */
     struct state_machine_t state_machine; 
-    state_machine.current_state = _ENTRY;
-    /* event = function() 
-        pass this event to transition_look_up()
-    */
+    state_machine.current_state = _IDLE;
+
+    
     for (;;) {
         transition_look_up(&state_machine, test_none);
+        PORTB ^= (1 << PB7);
     }
 }
 
@@ -104,50 +105,40 @@ void init_system() {
     PORTG |= (1 << PG5);
 
     uart0_init();
-    // init_timer0();
+    init_timer0();
 
-    set_sleep_mode(0);
+    set_sleep_mode(0);                                              // in Idle Mode, UART still runs
 
     sei();
 }
 
 void idle() {
-    uart0_puts("state: idle\r\n");
-    // PORTB ^= (1 << PB7);
-    sleep_mode();
+    sleep_mode();                                                   // function will return if wakes up from sleep
 }
 
 void test() {
     // TODO
-    uart0_puts("state: test\r\n");
-    // PORTB ^= (1 << PB7);
 }
 
 void _abort() {
     // TODO
-    uart0_puts("state: abort\r\n");
-    // PORTB ^= (1 << PB7);
 }
 
 void end() {
     // TODO
-    uart0_puts("state: end\r\n");
-    // PORTB ^= (1 << PB7);
 }
 
-// void transition_look_up(struct state_machine_t *state_machine, enum event_t event) {
-//     for (uint8_t i=0;i<sizeof(state_transition_matrix)/sizeof(state_transition_matrix[0]);i++) {
-//         if (state_transition_matrix[i].current_state == state_machine->current_state) {
-//             if (state_transition_matrix[i].event == event) {
-//                 /* transition to next state */
-//                 state_machine->current_state = state_transition_matrix[i].next_state;
-//                 /* run function */
-//                 (state_function_matrix[state_machine->current_state].func)();
-//             }
-//         }
-//     }
-// }
+void parse_message(char payload) {
+
+}
+
 
 ISR(TIMER0_OVF_vect) {
-    PORTB ^= (1 << PB7);
+    /*  no need to put anything here
+        provides 'tick' for transition look up iteration
+    */
+}
+
+ISR(USART0_RX_vect) {
+
 }
